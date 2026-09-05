@@ -1,0 +1,6 @@
+{
+  "name": "@dockyard/config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./eslint/index.js"
+}
