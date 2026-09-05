@@ -1,0 +1,9 @@
+{
+  "extends": "@dockyard/config/tsconfig/library.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "exclude": ["src/**/*.test.tsx", "src/**/*.stories.tsx"]
+}
