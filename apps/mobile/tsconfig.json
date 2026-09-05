@@ -1,0 +1,9 @@
+{
+  "extends": "@dockyard/config/tsconfig/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["expo-env.d.ts", "**/*.ts", "**/*.tsx"]
+}
