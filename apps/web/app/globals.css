@@ -1,26 +1,110 @@
 @import "tailwindcss";
 
+/* Dockyard tokens — mirrored from packages/ui/src/tokens/colors.ts */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --surface: #111111;
+  --surface-raised: #161616;
+  --surface-sunken: #0d0d0d;
+  --border: #1f1f1f;
+  --border-strong: #2e2e2e;
+  --foreground: #ececec;
+  --foreground-muted: #8f8f8f;
+  --foreground-faint: #5c5c5c;
+  --accent: #f5a524;
+  --accent-muted: #8a5f14;
+  --accent-foreground: #0a0a0a;
+  --success: #4ade80;
+  --destructive: #f87171;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-faint: var(--foreground-faint);
+  --color-accent: var(--accent);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-destructive: var(--destructive);
+  --font-display: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --radius-panel: 2px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--accent-muted);
+  color: var(--foreground);
+}
+
+/* Blueprint/drafting grid — depth through fine structure, not color. */
+.blueprint-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Horizon-line gradient — still harbor water at night. Landing hero only. */
+.harbor-horizon {
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 55%,
+      rgb(245 165 36 / 0.04) 78%,
+      rgb(245 165 36 / 0.09) 82%,
+      rgb(245 165 36 / 0.03) 86%,
+      transparent 100%
+    );
+}
+
+/* Staggered mount reveal — nav → desk → FeeMirror. Runs once. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    animation: reveal-in 400ms ease-out forwards;
+  }
+  .reveal-1 { animation-delay: 0ms; }
+  .reveal-2 { animation-delay: 120ms; }
+  .reveal-3 { animation-delay: 240ms; }
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+  }
+}
+
+/* Ledger table rhythm */
+.ledger-row {
+  border-bottom: 1px solid var(--border);
+}
+.ledger-row:last-child {
+  border-bottom: none;
 }
