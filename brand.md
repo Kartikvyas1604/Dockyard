@@ -1,5 +1,9 @@
 # Brand — Dockyard
 
+**Theme: Brass Lantern** — the dockyard runs at night; one lantern lights the deck. Near-black base, and amber `#f5a524` is the lantern that only lights what matters: *Shipped, Settled, Live*.
+
+**Mark: the dock crane.** Not an anchor (generic-crypto) — a port crane lifting a container: mast, jib, hook line, container = a strategy in transit. Sources: `apps/web/public/logo.svg` (lockup), `logo-mark.svg` (mark), `apps/web/app/icon.svg` + `favicon.ico` (favicon, regenerate with `pnpm --filter dockyard-icons generate`).
+
 A professional maker's desk. A shipyard control room, not a wallet dashboard. Every pixel either carries information or gets cut.
 
 ## Voice

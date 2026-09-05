@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DockMark } from "@/components/dock-mark";
 
 export default function Landing() {
   return (
@@ -6,7 +7,10 @@ export default function Landing() {
       <div className="blueprint-grid pointer-events-none absolute inset-0" aria-hidden />
 
       <header className="relative flex h-12 items-center justify-between border-b border-border px-4">
-        <span className="font-display text-lg tracking-tight">Dockyard</span>
+        <span className="flex items-center gap-2">
+          <DockMark size={22} />
+          <span className="font-display text-lg tracking-tight">Dockyard</span>
+        </span>
         <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-foreground-faint">
           self-custodial · aqua swapvm · the graph · hedera x402
         </span>

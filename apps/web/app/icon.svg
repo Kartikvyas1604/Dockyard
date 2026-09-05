@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Dockyard favicon — Brass Lantern. Crane simplified for 16px legibility. -->
+  <rect width="64" height="64" rx="12" fill="#0a0a0a"/>
+  <g stroke="#f5a524" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M20 52 V 14"/>
+    <path d="M14 14 H 46"/>
+    <path d="M42 14 V 30"/>
+    <path d="M42 30 v 3 a 4 4 0 1 1 -4 4"/>
+  </g>
+  <rect x="32" y="42" width="20" height="14" rx="2" fill="none" stroke="#ececec" stroke-width="4"/>
+</svg>

@@ -1,0 +1,1 @@
+{"name":"dockyard-icons","version":"0.0.0","private":true,"type":"module","scripts":{"generate":"node generate-icons.mjs"},"dependencies":{"sharp":"^0.33.5"}}

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@dockyard/ui";
 import { WalletButton } from "./wallet-button";
 import { DemoBanner } from "./demo-banner";
+import { DockMark } from "../dock-mark";
 
 const links = [
   { href: "/desk", label: "Desk" },
@@ -20,8 +21,11 @@ export function DeskShell({ children }: { children: React.ReactNode }) {
       <DemoBanner />
       <header className="reveal reveal-1 flex h-12 shrink-0 items-center justify-between gap-4 border-b border-border px-4">
         <div className="flex items-baseline gap-6">
-          <Link href="/" className="font-display text-lg tracking-tight text-foreground">
-            Dockyard
+          <Link href="/" className="flex items-center gap-2">
+            <DockMark size={22} />
+            <span className="font-display text-lg tracking-tight text-foreground">
+              Dockyard
+            </span>
           </Link>
           <nav aria-label="Desk navigation" className="flex items-center gap-1">
             {links.map((l) => {
