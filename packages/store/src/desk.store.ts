@@ -29,6 +29,14 @@ type IntelState = {
   stepError: string | null;
 };
 
+export type StrategyRow = {
+  strategyHash: `0x${string}`;
+  status: "shipped" | "docked";
+  virtualBalances: Record<string, string>;
+  shippedAt: number;
+  programKind: ProgramKind;
+};
+
 type Toast = { id: number; kind: "shipped" | "docked" | "error" | "info"; message: string };
 
 type DeskState = {
@@ -46,6 +54,14 @@ type DeskState = {
   toasts: Toast[];
   pushToast: (t: Omit<Toast, "id">) => void;
   dismissToast: (id: number) => void;
+
+  /** Lifecycle log — ship()/dock()/pull()/push()/swap()/quote() events. */
+  logs: { id: number; ts: number; line: string }[];
+  pushLog: (line: string) => void;
+
+  positions: StrategyRow[];
+  addPosition: (p: StrategyRow) => void;
+  dockPosition: (hash: string) => boolean;
 };
 
 let toastId = 0;
@@ -83,4 +99,26 @@ export const useDeskStore = create<DeskState>((set) => ({
   pushToast: (t) =>
     set((s) => ({ toasts: [...s.toasts.slice(-2), { ...t, id: ++toastId }] })),
   dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+
+  logs: [],
+  pushLog: (line) =>
+    set((s) => ({
+      logs: [{ id: ++toastId, ts: Date.now(), line }, ...s.logs].slice(0, 30),
+    })),
+
+  positions: [],
+  addPosition: (p) => set((s) => ({ positions: [p, ...s.positions] })),
+  dockPosition: (hash) => {
+    const found = useDeskStore
+      .getState()
+      .positions.some((p) => p.strategyHash === hash && p.status === "shipped");
+    if (found) {
+      set((s) => ({
+        positions: s.positions.map((p) =>
+          p.strategyHash === hash ? { ...p, status: "docked" as const } : p,
+        ),
+      }));
+    }
+    return found;
+  },
 }));
