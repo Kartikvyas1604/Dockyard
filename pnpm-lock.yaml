@@ -130,6 +130,9 @@ importers:
 
   packages/store:
     dependencies:
+      '@dockyard/api':
+        specifier: workspace:*
+        version: link:../api
       '@dockyard/utils':
         specifier: workspace:*
         version: link:../utils

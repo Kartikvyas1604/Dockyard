@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { cn } from "../../../lib/cn";
-import type { LabelProps } from "./Label.types";
+import type { LabelProps } from "./Label.props";
 
 /** Visible label — small caps, sits 4px above its input. */
 export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(

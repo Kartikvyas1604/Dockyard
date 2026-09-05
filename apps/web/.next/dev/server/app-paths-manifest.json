@@ -1,4 +1,5 @@
 {
+  "/api/intel/preview/route": "app/api/intel/preview/route.js",
   "/desk/page": "app/desk/page.js",
   "/page": "app/page.js"
 }

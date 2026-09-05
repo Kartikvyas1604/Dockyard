@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@dockyard/api": "workspace:*",
     "@dockyard/utils": "workspace:*",
     "zustand": "^5"
   },

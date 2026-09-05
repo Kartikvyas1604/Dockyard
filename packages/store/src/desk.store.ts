@@ -108,10 +108,9 @@ export const useDeskStore = create<DeskState>((set) => ({
 
   positions: [],
   addPosition: (p) => set((s) => ({ positions: [p, ...s.positions] })),
-  dockPosition: (hash) => {
-    const found = useDeskStore
-      .getState()
-      .positions.some((p) => p.strategyHash === hash && p.status === "shipped");
+  dockPosition: (hash): boolean => {
+    const positions = useDeskStore.getState().positions;
+    const found = positions.some((p) => p.strategyHash === hash && p.status === "shipped");
     if (found) {
       set((s) => ({
         positions: s.positions.map((p) =>

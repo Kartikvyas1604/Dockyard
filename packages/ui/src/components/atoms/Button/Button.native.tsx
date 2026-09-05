@@ -1,6 +1,6 @@
 import { Activity, Text, Pressable } from "react-native";
 import { colors } from "../../../tokens/colors";
-import type { NativeButtonProps } from "./Button.native.types";
+import type { NativeButtonProps } from "./Button.native.props";
 
 /** React Native override — resolved by Metro on mobile builds. */
 export function Button({ onPress, label, variant = "secondary", disabled, loading, children }: NativeButtonProps) {

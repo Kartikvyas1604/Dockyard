@@ -30,18 +30,7 @@ export const colors = {
   destructive: "#f87171",
 } as const;
 
-export const spacing = {
-  panel: "24px", // internal panel padding — generous inside
-  gap: "1px", // hairline between panels — tight, no slack
-  page: "16px",
-} as const;
-
-export const typography = {
-  display: "var(--font-newsreader), Georgia, serif",
-  mono: "var(--font-jetbrains-mono), ui-monospace, monospace",
-  sans: "var(--font-newsreader), Georgia, serif",
-} as const;
-
+/** Hairline panel radius — structure over chrome. */
 export const radii = {
   none: "0px",
   panel: "2px",

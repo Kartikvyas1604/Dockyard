@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { cn } from "../../../lib/cn";
-import type { ButtonProps } from "./Button.types";
+import type { ButtonProps } from "./Button.props";
 
 const variantClasses: Record<string, string> = {
   primary:
