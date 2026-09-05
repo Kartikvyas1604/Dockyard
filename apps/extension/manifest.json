@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Dockyard Desk",
+  "version": "0.1.0",
+  "description": "Dockyard Strategy Intel companion — x402 payment sidecar for agents.",
+  "action": {
+    "default_popup": "src/popup/index.html"
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "permissions": ["storage"]
+}

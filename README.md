@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dockyard
 
-## Getting Started
+**Self-custodial multi-strategy LP desk.** Ship 1inch Aqua SwapVM strategies straight from
+your wallet (no deposit vault), steer ranges/fees with The Graph standardized DEX data, and
+buy Strategy Intel per call over Hedera x402.
 
-First, run the development server:
+Not a vault. Not verify. Not a game.
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dev --filter=@dockyard/web   # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy `apps/web/.env.local` from `.env.example` and fill in what you have — the UI
+degrades honestly (error states, never mock data) when services aren't configured.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Monorepo layout
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+dockyard/
+├── apps/
+│   ├── web/          Next.js 16 App Router — the desk
+│   ├── mobile/       Expo placeholder (monitoring scope)
+│   └── extension/    MV3 placeholder (x402 payment sidecar)
+├── packages/
+│   ├── ui/           Design tokens + atoms + Panel primitive (amber/near-black system)
+│   ├── hooks/        useIntelPreview, useIntelPurchase, usePlatform, useLocalStorage
+│   ├── utils/        formatters, validators (zod), storage, logger
+│   ├── api/          typed client + FeeIntel types + 402 contract
+│   ├── store/        zustand desk/settings stores
+│   └── config/       tsconfig / eslint / prettier presets
+└── .github/workflows/ci.yml   affected-only turbo CI
+```
 
-## Learn More
+**Shared-first rule:** before writing logic in an app, ask whether it belongs in
+`packages/`. If yes, it goes there. See `CONTRIBUTING.md`.
 
-To learn more about Next.js, take a look at the following resources:
+## Commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Task | Command |
+|---|---|
+| Dev (web) | `pnpm dev --filter=@dockyard/web` |
+| Build all | `pnpm build` |
+| Lint / typecheck / test | `pnpm lint` / `pnpm typecheck` / `pnpm test` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Design system
 
-## Deploy on Vercel
+`brand.md` is the source of truth: near-black base, single amber accent (`#f5a524`,
+signal only), Newsreader display / JetBrains Mono data, hairline borders over shadows,
+ledger tables with right-aligned numerics, minimal motion that respects
+`prefers-reduced-motion`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Bounty map (ETHOnline 2026)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **1inch (Aqua App):** Desk ships XYCConcentrate programs against `AquaRouter`
+  (`0x1111113ccf…a90a`) / `AquaSwapVMRouter` (`0x111111338c…c0de`). Lifecycle verbs
+  `ship()` / `dock()` / `pull()` / `push()` / `swap()` / `quote()` are surfaced in UI copy
+  and the status log. SwapVM encode wiring lands in `apps/web/components/desk/ship-form.tsx`.
+- **The Graph (Standardized Products):** `apps/web/lib/graph/standardized-query.ts` runs
+  ONE query pattern (`financialsDailySnapshots`) across every `GRAPH_SUBGRAPH_URLS`
+  deployment (Messari standardized DEX schema) → FeeMirror panel → "Apply to ship form".
+- **Hedera (x402):** `POST /api/intel` returns a real HTTP 402 with payment requirements;
+  the Pay Intel stepper walks `402 → paying → settled → applied`.
+
+## Risk & custody language
+
+Protocol holds zero tokens; only ERC-20 allowances to Aqua. The ship form always shows the
+plain risk line (impermanent loss, underfunded strategies stop filling, approval risk).
+Never claim custody, guaranteed yield, or risk-free.
+
+## License
+
+MIT.

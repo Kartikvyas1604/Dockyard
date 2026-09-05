@@ -1,0 +1,23 @@
+{
+  "name": "@dockyard/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dockyard/hooks": "workspace:*",
+    "@dockyard/store": "workspace:*",
+    "@dockyard/ui": "workspace:*",
+    "@dockyard/utils": "workspace:*",
+    "expo": "~51.0.0",
+    "expo-router": "~3.5.0",
+    "react": "19.2.8",
+    "react-native": "0.74.0"
+  },
+  "devDependencies": {
+    "@dockyard/config": "workspace:*",
+    "typescript": "^5"
+  }
+}
