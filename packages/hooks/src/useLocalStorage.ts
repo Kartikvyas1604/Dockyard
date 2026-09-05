@@ -1,21 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { loadJSON, saveJSON } from "@dockyard/utils";
 
-/** persisted state hook backed by @dockyard/utils storage. */
+/**
+ * Persisted state hook backed by @dockyard/utils storage.
+ * Lazy initializer reads storage synchronously on the client; on the server
+ * loadJSON falls back to the seed value, so no effect-cascade is needed.
+ */
 export function useLocalStorage<T>(key: string, initial: T): [T, (v: T) => void] {
-  const [value, setValue] = useState<T>(initial);
-
-  useEffect(() => {
-    import("@dockyard/utils").then(({ loadJSON }) => {
-      setValue(loadJSON<T>(key, initial));
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  const [value, setValue] = useState<T>(() => loadJSON(key, initial));
 
   const update = (v: T) => {
     setValue(v);
-    void import("@dockyard/utils").then(({ saveJSON }) => saveJSON(key, v));
+    saveJSON(key, v);
   };
 
   return [value, update];

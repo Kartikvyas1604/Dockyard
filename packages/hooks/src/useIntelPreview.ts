@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { endpoints } from "@dockyard/api";
 import type { FeeIntelPayload, FeeIntelRequest } from "@dockyard/api";
 
@@ -11,27 +11,28 @@ export type IntelStatus = "idle" | "loading" | "ready" | "error";
  * The x402 paid path lives in useIntelPurchase.
  */
 export function useIntelPreview(req: FeeIntelRequest | null) {
-  const [status, setStatus] = useState<IntelStatus>("idle");
-  const [data, setData] = useState<FeeIntelPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const query = useQuery({
+    queryKey: ["intel-preview", req?.base, req?.quote, req?.lookbackHours] as const,
+    queryFn: ({ signal }) => endpoints.intel.preview(req as FeeIntelRequest, signal),
+    enabled: req !== null,
+    staleTime: 15_000,
+    retry: 1,
+  });
 
-  const refresh = useCallback(async () => {
-    if (!req) return;
-    setStatus("loading");
-    setError(null);
-    try {
-      const payload = await endpoints.intel.preview(req);
-      setData(payload);
-      setStatus("ready");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't reach the Graph");
-      setStatus("error");
-    }
-  }, [req]);
+  const status: IntelStatus = query.isError
+    ? "error"
+    : query.isPending
+      ? "idle"
+      : query.isFetching
+        ? "loading"
+        : "ready";
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  return { status, data, error, refresh };
+  return {
+    status,
+    data: (query.data ?? null) as FeeIntelPayload | null,
+    error: query.error instanceof Error ? query.error.message : null,
+    refresh: async () => {
+      await query.refetch();
+    },
+  };
 }

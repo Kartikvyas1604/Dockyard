@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@dockyard/config": "workspace:*",
-    "typescript": "^5"
+    "typescript": "^5",
+    "typescript-eslint": "^8.69.0"
   }
 }

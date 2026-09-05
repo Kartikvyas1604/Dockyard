@@ -1,48 +1,63 @@
-# dependencies
+# ── Dependencies — never commit, anywhere in the monorepo ──────────────
 node_modules/
+node_modules
 .pnpm-store/
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+bun.lockb
+package-lock.json
 
-# next.js
+# ── Build artifacts ─────────────────────────────────────────────────────
 .next/
-out/
 next-env.d.ts
-
-# turborepo
-.turbo/
-
-# production
+out/
 build/
 dist/
-coverage/
+*.tsbuildinfo
+.turbo/
 
-# env files — .env.example stays committed
+# ── Env & secrets — only .env.example is ever committed ─────────────────
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+credentials.json
+secrets.json
 
-# foundry / anvil fork artifacts
+# ── Test / coverage ─────────────────────────────────────────────────────
+coverage/
+
+# ── Foundry / Anvil fork artifacts ──────────────────────────────────────
 forge/cache/
 forge/out/
 broadcast/
+cache/
 
-# hedera / x402 local state
-.hedera/
-
-# misc
-.DS_Store
-*.pem
-.vercel
-
-# logs
+# ── Logs ────────────────────────────────────────────────────────────────
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.pnpm-debug.log
 
-# typescript
-*.tsbuildinfo
+# ── Local tooling state ─────────────────────────────────────────────────
+.vercel
+.hedera/
+.wrangler/
+.storybook-out/
+storybook-static/
 
-# editors
+# ── OS / editor ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
 .idea/
 .vscode/*
 !.vscode/extensions.json
