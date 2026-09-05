@@ -1,0 +1,7 @@
+{
+  "extends": "@dockyard/config/tsconfig/library.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  }
+}
