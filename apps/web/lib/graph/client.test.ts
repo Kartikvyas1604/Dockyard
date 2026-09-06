@@ -21,7 +21,7 @@ describe("composeFeeSnapshots", () => {
 describe("scoreToRecommendation", () => {
   const snaps: StandardizedSnapshot[] = [
     { protocol: "uniswap-v3", subgraph: "u", feeUsd24h: 250_000, volumeUsd24h: 400_000_000 },
-    { protocol: "curve", subgraph: "c", feeUsd24h: 250_000, volumeUsd24h: 200_000_000 },
+    { protocol: "curve", subgraph: "c", feeUsd24h: 250_000, volumeUsd24h: 50_000_000 },
   ];
 
   it("recommends standard 30bps when fees are dispersed", () => {
