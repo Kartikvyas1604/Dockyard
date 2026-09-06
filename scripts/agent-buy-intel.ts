@@ -1,18 +1,26 @@
 /**
  * scripts/agent-buy-intel.ts — agent-side x402 Strategy Intel purchase.
  *
- * Wire flow (Hedera testnet via Blocky402 facilitator):
+ * Wire flow (Hedera testnet via Blocky402 facilitator, x402 v2):
  *   1. GET  {BASE}/api/intel?base=WETH&quote=USDC
- *   2. ← 402 { x402: { accepts: [...] } }
- *   3. Build payment payload (sign per facilitator scheme), submit to
- *      facilitator /verify → settlement receipt
- *   4. GET again with X-PAYMENT header
+ *   2. ← 402 { x402Version: 2, accepts: [...] }
+ *   3. Sign a partially-signed Hedera TransferTransaction via @x402/hedera
+ *      (ExactHederaScheme.createPaymentPayload) — includes extra.feePayer
+ *      from the 402 requirements
+ *   4. GET again with X-PAYMENT: base64(JSON(paymentPayload))
  *   5. ← 200 FeeIntelPayload + receipt
+ *
+ * Production sign step (per https://blocky402.com/docs/ + @x402/hedera):
+ *   import { wrapFetchWithPayment } from "@x402/fetch";
+ *   import { x402Client } from "@x402/core/client";
+ *   import { ExactHederaScheme } from "@x402/hedera/exact/client";
+ *   import { createClientHederaSigner, PrivateKey } from "@x402/hedera";
+ *   wrapFetchWithPayment(fetch, client) handles 402 → sign → retry.
  *
  * Env:
  *   BASE_URL                http://localhost:3000
- *   X402_FACILITATOR_URL    Blocky402 facilitator base
- *   HEDERA_OPERATOR_ID / HEDERA_OPERATOR_KEY  (signing account)
+ *   X402_FACILITATOR_URL    https://api.testnet.blocky402.com
+ *   HEDERA_OPERATOR_ID / HEDERA_OPERATOR_KEY  (payer account, ECDSA hex key)
  *
  * Run: pnpm --filter @dockyard/web exec tsx ../../scripts/agent-buy-intel.ts
  */
@@ -20,10 +28,11 @@
 type PaymentRequirements = {
   scheme: string;
   network: string;
-  maxAmountRequired: string;
+  amount: string;
   resource: string;
   payTo: string;
   asset: string;
+  extra?: { feePayer?: string };
 };
 
 async function main() {
@@ -52,44 +61,57 @@ async function main() {
     process.exit(1);
   }
   const body = (await first.json()) as {
-    x402?: { accepts: PaymentRequirements[] };
+    x402Version?: number;
+    accepts?: PaymentRequirements[];
   };
-  const req402 = body.x402?.accepts?.[0];
-  if (!req402) {
-    console.error("[agent] 402 body missing x402.accepts:", JSON.stringify(body));
+  const req402 = body.accepts?.[0];
+  if (body.x402Version !== 2 || !req402) {
+    console.error("[agent] 402 body missing x402Version:2/accepts:", JSON.stringify(body));
     process.exit(1);
   }
-  console.log(`[agent] 2. got 402 — price ${req402.maxAmountRequired} tinybars to ${req402.payTo}`);
+  console.log(`[agent] 2. got 402 (x402 v${body.x402Version}) — price ${req402.amount} tinybars to ${req402.payTo}`);
 
-  // Signing: the production signing step uses the Hedera SDK to build the
-  // facilitator's payment payload (crypto transfer of maxAmountRequired
-  // tinybars HBAR to payTo). The exact payload shape is facilitator-defined —
-  // consult the Blocky402 docs for /verify's accepted `payment` object and
-  // plug it in here. Kept explicit (not mocked) so the paid path stays honest.
-  console.log("[agent] 3. building payment payload (facilitator-defined shape)…");
-  const paymentPayload = JSON.stringify({
-    scheme: req402.scheme,
-    network: req402.network,
-    amount: req402.maxAmountRequired,
-    asset: req402.asset,
-    payTo: req402.payTo,
-    resource: req402.resource,
-    operatorId,
-    // signature: <HEDERA_SDK_SIGNED_PAYLOAD — per Blocky402 /verify contract>
-  });
+  // Signing: production uses @x402/hedera's ExactHederaScheme to build the
+  // partially-signed Hedera TransferTransaction (see header comment for the
+  // exact imports). The payload must include extra.feePayer = the facilitator's
+  // advertised fee payer. The base64 paymentPayload goes in the X-PAYMENT
+  // header; Blocky402 /verify + /settle do the rest. Kept explicit (not
+  // mocked) so the paid path stays honest.
+  console.log("[agent] 3. building payment payload (x402 v2 Hedera exact scheme)…");
+  const paymentPayload = Buffer.from(
+    JSON.stringify({
+      x402Version: 2,
+      scheme: req402.scheme,
+      network: req402.network,
+      accepted: req402,
+      payload: {
+        transaction: "<base64 partially-signed TransferTransaction — @x402/hedera>",
+      },
+    }),
+  ).toString("base64");
 
   console.log("[agent] 4. verifying + settling via facilitator…");
   const verifyRes = await fetch(`${facilitator.replace(/\/$/, "")}/verify`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ payment: paymentPayload, resource: req402.resource }),
+    headers: { "Content-Type": "application/json", "X-PAYMENT": paymentPayload },
+    body: JSON.stringify({ paymentRequirements: req402 }),
   });
-  const verifyJson = (await verifyRes.json()) as { verified?: boolean; settled?: boolean; txHash?: string; reason?: string };
-  if (!verifyJson.verified || !verifyJson.settled) {
-    console.error("[agent] settlement failed:", verifyJson.reason ?? verifyJson);
+  const verifyJson = (await verifyRes.json()) as { isValid?: boolean; invalidReason?: string };
+  if (!verifyJson.isValid) {
+    console.error("[agent] verify failed:", verifyJson.invalidReason ?? verifyJson);
     process.exit(1);
   }
-  console.log(`[agent] settled: ${verifyJson.txHash ?? "(no tx hash returned)"}`);
+  const settleRes = await fetch(`${facilitator.replace(/\/$/, "")}/settle`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-PAYMENT": paymentPayload },
+    body: JSON.stringify({ paymentRequirements: req402 }),
+  });
+  const settleJson = (await settleRes.json()) as { success?: boolean; transaction?: string; errorReason?: string };
+  if (!settleJson.success) {
+    console.error("[agent] settle failed:", settleJson.errorReason ?? settleJson);
+    process.exit(1);
+  }
+  console.log(`[agent] settled: ${settleJson.transaction ?? "(no tx returned)"}`);
 
   console.log("[agent] 5. retrying intel with X-PAYMENT…");
   const paid = await fetch(url, { headers: { "x-payment": paymentPayload } });

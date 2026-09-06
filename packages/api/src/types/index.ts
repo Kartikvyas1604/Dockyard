@@ -36,22 +36,26 @@ export type FeeIntelRequest = {
 /** x402 lifecycle states surfaced in the Pay Intel stepper. */
 export type IntelStep = "idle" | "402" | "paying" | "settled" | "applied" | "failed";
 
+/** x402 v2 wire shape (Blocky402 facilitator contract). */
 export type IntelErrorResponse = {
   error: "payment_required";
-  x402: {
-    version: 1;
-    accepts: {
-      scheme: string;
-      network: string;
-      maxAmountRequired: string;
-      resource: string;
-      description: string;
-      mimeType: string;
-      payTo: string;
-      asset: string;
-      maxTimeoutSeconds: number;
-    }[];
-  };
+  x402Version: 2;
+  accepts: {
+    scheme: string;
+    network: string;
+    /** Tinybars base units (v2 field name). */
+    amount: string;
+    resource: string;
+    description: string;
+    mimeType: string;
+    payTo: string;
+    asset: string;
+    maxTimeoutSeconds: number;
+    extra?: { feePayer?: string };
+  }[];
+  message?: string;
+  requestId?: string;
+  retryable?: boolean;
 };
 
 export type ApiError = {

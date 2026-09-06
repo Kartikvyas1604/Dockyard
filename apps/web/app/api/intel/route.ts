@@ -11,6 +11,7 @@ import { getReceipt, putReceipt } from "@/lib/x402/receipts";
 
 /**
  * x402-gated Strategy Intel (Hedera testnet via Blocky402 facilitator).
+ * Wire format: x402 v2 — 402 body carries { x402Version: 2, accepts }.
  *
  *   GET/POST without X-PAYMENT → 402 + payment requirements
  *   GET/POST with X-PAYMENT   → verify/settle → 200 intel payload
@@ -20,10 +21,13 @@ import { getReceipt, putReceipt } from "@/lib/x402/receipts";
  * Same payload shape as /api/intel/preview — Apply-to-ship works either way.
  */
 
-function requirements402(requestId: string) {
+async function requirements402(requestId: string) {
   return errorResponse("payment_required", "Payment required: complete x402 settlement and retry with X-PAYMENT.", requestId, {
     status: 402,
-    extra: { x402: { version: 1, accepts: [paymentRequirements("/api/intel")] } },
+    extra: {
+      x402Version: 2,
+      accepts: [await paymentRequirements("/api/intel")],
+    },
   });
 }
 
@@ -56,7 +60,10 @@ async function paidIntel(
     log("warn", "intel.paid.unverified", { req: requestId, reason: decision.reason });
     return errorResponse("payment_unverified", `Payment not settled: ${decision.reason}.`, requestId, {
       status: 402,
-      extra: { x402: { version: 1, accepts: [paymentRequirements("/api/intel")] } },
+      extra: {
+        x402Version: 2,
+        accepts: [await paymentRequirements("/api/intel")],
+      },
     });
   }
 
