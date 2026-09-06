@@ -1,59 +1,87 @@
-import { NextResponse } from "next/server";
-import { composeFeeSnapshots, scoreToRecommendation } from "@/lib/graph/standardized-query";
 import type { FeeIntelPayload } from "@dockyard/api";
+import { cacheGet, cacheKey, cacheSet } from "@/lib/api/cache";
+import { serverEnv, graphUrls, isGraphConfigured } from "@/lib/api/env";
+import { errorResponse, ok } from "@/lib/api/errors";
+import { checkRateLimit } from "@/lib/api/rate-limit";
+import { log, requestIdFrom } from "@/lib/api/request";
+import { parseIntelBody } from "@/lib/api/validation";
+import { composeFeeSnapshots, scoreToRecommendation } from "@/lib/graph/client";
 
 /**
- * Ungated intel preview — for iteration only. The judged demo path must go
- * through the x402 route at /api/intel.
+ * POST /api/intel/preview — ungated iteration path.
+ * Hardened: zod validation, per-IP rate limit, 30s TTL cache,
+ * consistent error envelope, partial-success tolerant.
  */
 export async function POST(req: Request) {
-  if (!process.env.GRAPH_SUBGRAPH_URLS) {
-    return NextResponse.json(
-      {
-        error: "not_configured",
-        message:
-          "GRAPH_SUBGRAPH_URLS is not set. Add Messari standardized DEX deployment URLs — the panel shows an honest error, never mock data.",
-      },
-      { status: 501 },
+  const requestId = requestIdFrom(req);
+  const env = serverEnv();
+
+  const limit = checkRateLimit(req, "intel-preview", env.INTEL_RATE_LIMIT_PER_MIN);
+  if (!limit.allowed) {
+    return errorResponse("rate_limited", "Too many preview requests — slow down and retry.", requestId, {
+      status: 429,
+      headers: { "retry-after": String(limit.retryAfterSec) },
+    });
+  }
+
+  if (!isGraphConfigured()) {
+    return errorResponse(
+      "not_configured",
+      "GRAPH_SUBGRAPH_URLS is not set. Add Messari standardized DEX deployment URLs — the panel shows an honest error, never mock data.",
+      requestId,
     );
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | { base?: string; quote?: string; lookbackHours?: number }
-    | null;
-  if (!body?.base || !body?.quote) {
-    return NextResponse.json(
-      { error: "bad_request", message: "base and quote are required" },
-      { status: 400 },
-    );
-  }
-
+  let body: unknown = null;
   try {
-    const snaps = await composeFeeSnapshots(process.env.GRAPH_SUBGRAPH_URLS.split(","));
+    body = await req.json();
+  } catch {
+    return errorResponse("bad_request", "Request body must be valid JSON.", requestId);
+  }
+  const parsed = parseIntelBody(body);
+  if (!parsed.ok) {
+    return errorResponse("bad_request", "Invalid intel request.", requestId, { details: parsed.issues });
+  }
+  const { base, quote, lookbackHours } = parsed.value;
+
+  const key = cacheKey(["preview", base, quote, lookbackHours]);
+  const cached = cacheGet<FeeIntelPayload>(key);
+  if (cached) {
+    log("info", "intel.preview.cache_hit", { req: requestId, base, quote });
+    return ok({ ...cached, cache: "hit" as const }, requestId);
+  }
+
+  const started = Date.now();
+  try {
+    const snaps = await composeFeeSnapshots(graphUrls(), {
+      apiKey: env.GRAPH_API_KEY,
+      lookbackHours,
+    });
     if (snaps.length === 0) {
-      return NextResponse.json(
-        {
-          error: "no_data",
-          message: "No standardized deployments answered in the lookback window.",
-        },
-        { status: 502 },
+      log("warn", "intel.preview.no_data", { req: requestId, base, quote });
+      return errorResponse(
+        "no_data",
+        "No standardized deployments answered in the lookback window.",
+        requestId,
       );
     }
-
     const payload: FeeIntelPayload = {
       asOf: new Date().toISOString(),
       sources: snaps,
       recommendation: scoreToRecommendation(snaps),
       graphQueryIds: snaps.map((s) => s.subgraph),
     };
-    return NextResponse.json(payload);
+    cacheSet(key, payload, env.INTEL_CACHE_TTL_MS);
+    log("info", "intel.preview.ok", {
+      req: requestId,
+      base,
+      quote,
+      sources: snaps.length,
+      ms: Date.now() - started,
+    });
+    return ok(payload, requestId);
   } catch (e) {
-    return NextResponse.json(
-      {
-        error: "upstream",
-        message: e instanceof Error ? e.message : "Graph query failed",
-      },
-      { status: 502 },
-    );
+    log("error", "intel.preview.upstream", { req: requestId, err: e instanceof Error ? e.message : String(e) });
+    return errorResponse("upstream", e instanceof Error ? e.message : "Graph query failed", requestId);
   }
 }
