@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { errorResponse, ok } from "@/lib/api/errors";
 import { requestIdFrom } from "@/lib/api/request";
 import { checkRateLimit } from "@/lib/api/rate-limit";

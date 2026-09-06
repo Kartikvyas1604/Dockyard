@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * Edge middleware: security headers on every response + API version banner.
  * No auth state (self-custodial desk — no accounts by design).
  */
-export function middleware(req: NextRequest) {
+export function middleware(_req: NextRequest) {
   const res = NextResponse.next();
   res.headers.set("x-api-version", "v1");
   res.headers.set("x-content-type-options", "nosniff");
