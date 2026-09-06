@@ -32,7 +32,9 @@ describe("strategy draft", () => {
   });
 
   it("requires ticks for XYCConcentrate", () => {
-    const { tickLower: _l, tickUpper: _u, ...noTicks } = valid;
+    const noTicks = { ...valid } as Partial<typeof valid>;
+    delete noTicks.tickLower;
+    delete noTicks.tickUpper;
     expect(strategyDraftSchema.safeParse(noTicks).success).toBe(false);
   });
 

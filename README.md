@@ -52,6 +52,28 @@ signal only), Newsreader display / JetBrains Mono data, hairline borders over sh
 ledger tables with right-aligned numerics, minimal motion that respects
 `prefers-reduced-motion`.
 
+## Backend API (v1)
+
+Machine-readable contract: `GET /api/openapi`. Every error uses one envelope:
+`{ error, message, requestId, retryable }` with `x-request-id` echoed on responses.
+
+| Endpoint | Purpose | Notes |
+|---|---|---|
+| `GET /api/health` | Liveness | Always 200 when the runtime is up |
+| `GET /api/ready` | Readiness + dependency status | 503 when core deps unconfigured |
+| `POST /api/intel/preview` | Ungated intel (iteration only) | zod-validated, rate-limited, 30s TTL cache |
+| `GET/POST /api/intel` | **x402-gated Strategy Intel** | 402 → pay (Blocky402, Hedera testnet) → 200; idempotent on `X-PAYMENT` retry |
+| `POST /api/strategy/validate` | Ship-draft validation | Derives `strategyHash`, returns exact-allowance guidance; custody-free |
+
+Backend hardening: per-IP sliding-window rate limits (`INTEL_RATE_LIMIT_PER_MIN`),
+TTL intel cache (`INTEL_CACHE_TTL_MS`), zod-validated env + requests, structured
+JSON logs with request-id correlation, security headers via middleware,
+fail-closed x402 verification (unverified payment never mints intel), and a
+unit test suite (`pnpm test --filter=@dockyard/web`).
+
+Agent purchase flow: `scripts/agent-buy-intel.ts` walks
+`GET → 402 → facilitator verify/settle → GET with X-PAYMENT → 200 intel`.
+
 ## Bounty map (ETHOnline 2026)
 
 - **1inch (Aqua App):** Desk ships XYCConcentrate programs against `AquaRouter`
